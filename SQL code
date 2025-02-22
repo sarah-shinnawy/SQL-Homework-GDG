@@ -1,0 +1,122 @@
+USE master;  
+ALTER DATABASE RetailStoreDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;  
+DROP DATABASE IF EXISTS RetailStoreDB;
+-- i wrote these lines to be able to run the database multiple times without getting the error "this database already exists".
+
+CREATE DATABASE RetailStoreDB;
+USE RetailStoreDB;
+
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Products;
+DROP TABLE IF EXISTS Customers;
+
+-- Customers table
+CREATE TABLE Customers (
+   CustomerID INT PRIMARY KEY IDENTITY(1,1),
+   FirstName VARCHAR(255),
+   LastName VARCHAR(255),
+   Email VARCHAR(255),
+   RegistrationDate DATE
+);
+
+-- Products table
+CREATE TABLE Products (
+   ProductID INT PRIMARY KEY IDENTITY(1,1),
+   ProductName VARCHAR(255),
+   Category VARCHAR(255),
+   Price DECIMAL(10,2), 
+   StockQuantity INT
+);
+
+-- Orders table
+CREATE TABLE Orders (
+   OrderID INT PRIMARY KEY IDENTITY(1,1),
+   CustomerID INT FOREIGN KEY REFERENCES Customers(CustomerID),
+   ProductID INT FOREIGN KEY REFERENCES Products(ProductID),
+   OrderDate DATE, 
+   Quantity INT
+);
+
+-- Insert Customers
+INSERT INTO Customers (FirstName, LastName, Email, RegistrationDate) VALUES 
+('Sarah', 'Ahmed', 'sarah@Customers.com', '2023-01-15'),
+('Mariam', 'Mazen', 'mariam@Customers.com', '2023-05-20'),
+('Alaa', 'Tamer', 'alaa@Customers.com', '2022-11-10'),
+('Reem', 'Khaled', 'reem@Customers.com', '2024-02-05'),
+('Tasneem', 'Mostafa', 'tasneem@Customers.com', '2023-07-18');
+
+-- Insert Products
+INSERT INTO Products (ProductName, Category, Price, StockQuantity) VALUES 
+('Laptop', 'Electronics', 1200.99, 10),
+('Smartphone', 'Electronics', 799.99, 25),
+('Headphones', 'Accessories', 199.99, 50),
+('Desk Chair', 'Furniture', 149.99, 15),
+('Coffee Maker', 'Appliances', 89.99, 30);
+
+-- Insert Orders
+INSERT INTO Orders (CustomerID, ProductID, OrderDate, Quantity) VALUES 
+(1, 2, '2024-02-01', 1),
+(2, 1, '2024-02-02', 2),
+(3, 3, '2024-02-03', 1),
+(4, 4, '2024-02-04', 3),
+(5, 5, '2024-02-05', 2);
+
+-- Retrieve all data
+SELECT * FROM Customers;
+SELECT * FROM Products;
+SELECT * FROM Orders;
+
+-- Show customers who registered after a specific date
+SELECT * 
+FROM Customers
+WHERE RegistrationDate > '2023-01-01';
+
+-- Select the top 3 most expensive products
+SELECT TOP 3 *
+FROM Products
+ORDER BY Price DESC;
+
+-- Join tables to display Orders with customer names and product details.
+SELECT 
+    Orders.OrderID,
+    Customers.FirstName,
+    Customers.LastName,
+    Products.ProductName,
+    Products.Price,
+    Orders.Quantity,
+    Orders.OrderDate
+FROM Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID
+INNER JOIN Products ON Orders.ProductID = Products.ProductID;
+
+-- Join tables to display total amount spent by each customer.
+SELECT 
+    Customers.CustomerID,
+    Customers.FirstName,
+    Customers.LastName,
+    SUM(Products.Price * Orders.Quantity) AS TotalAmountSpent
+FROM Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID
+INNER JOIN Products ON Orders.ProductID = Products.ProductID
+GROUP BY Customers.CustomerID, Customers.FirstName, Customers.LastName;
+
+-- Use GROUP BY to find the number of orders placed by each customer.
+SELECT 
+    Customers.CustomerID,
+    Customers.FirstName,
+    Customers.LastName,
+    COUNT(Orders.OrderID) AS NumberOfOrders
+FROM Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID
+GROUP BY Customers.CustomerID, Customers.FirstName, Customers.LastName;
+
+-- Use GROUP BY to find total sales for each product.
+SELECT 
+    Products.ProductID,
+    Products.ProductName,
+    SUM(Orders.Quantity) AS TotalSales
+FROM Orders
+INNER JOIN Products ON Orders.ProductID = Products.ProductID
+GROUP BY Products.ProductID, Products.ProductName;
+
+
